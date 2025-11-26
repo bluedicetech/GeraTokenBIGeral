@@ -1,0 +1,10 @@
+apscheduler
+schedule
+pyodbc
+datetime
+fastapi
+uvicorn
+python-dotenv
+psycopg2
+pandas
+
