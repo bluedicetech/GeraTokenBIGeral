@@ -6,11 +6,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 def credenciais_banco(database_empresa):
+    Server = '157.230.88.244'
+    UID = 'postgres'
+    PWD = 'kBD6mBu-GenT$aF'
     conn = psycopg2.connect(
-        host=os.getenv("Server"),
+        host=Server,
         database= database_empresa,
-        user=os.getenv("UID"),
-        password=os.getenv("PWD")
+        user=UID,
+        password=PWD
     )
     return conn
 

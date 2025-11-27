@@ -12,10 +12,6 @@ from functools import partial
 
 load_dotenv()
 
-# Obter variáveis de ambiente
-username = os.getenv("username")
-password = os.getenv("password")
-
 global status
 
 app = FastAPI()
