@@ -8,16 +8,18 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import schedule
 import threading
 from functools import partial
-
+from descriptografia import *
 
 load_dotenv()
 
 global status
 
 app = FastAPI()
+APP_KEY='base64:3vRS8+dCkZnpCbBEBGxcce79YyAnwp8OoWe4FKCnaaw='
 
 # Para rodar no windows 
 def get_powerbi_access_token(username, password, banco_empresa):
+    status = 0
     cmd_debian = 'pwsh'
     cmd_windows = 'powershell'
     try:
@@ -33,7 +35,7 @@ def get_powerbi_access_token(username, password, banco_empresa):
         """
         
         # Executa o script PowerShell
-        result = subprocess.run([cmd_debian, "-Command", powershell_script], capture_output=True, text=True)
+        result = subprocess.run(["powershell", "-Command", powershell_script], capture_output=True, text=True)
         
         # Verifica se o comando foi bem-sucedido
         if result.returncode == 0:
@@ -75,7 +77,8 @@ def gera_dados_por_empresa():
     for index, row in df_lista_banco_de_dados.iterrows():
         nome_empresa = 'emp_' + str(row['cnpj']).replace('/','').replace('.','').replace('-','')
         login = row['email_publicacao']
-        senha = "@Azul2512"
+        senha = row['password_publicacao']
+        # senha = laravel_decrypt(senha,APP_KEY)
         lista_empresas.append({
         "empresa": nome_empresa,
         "login": login,
@@ -90,7 +93,7 @@ def iniciar_agendador_simplificado():
     df = gera_dados_por_empresa()  
     
     for i in range(5, 23):
-        time_str = f"{i:02d}:47"
+        time_str = f"{i:02d}:00"
         for index, empresa in df.iterrows():
             username = empresa['login']
             senha = empresa['senha']
