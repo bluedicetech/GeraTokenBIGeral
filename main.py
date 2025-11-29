@@ -8,7 +8,6 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import schedule
 import threading
 from functools import partial
-from descriptografia import *
 
 load_dotenv()
 
