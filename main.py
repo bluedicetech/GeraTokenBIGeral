@@ -8,6 +8,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 import schedule
 import threading
 from functools import partial
+import platform
 
 load_dotenv()
 
@@ -19,8 +20,7 @@ APP_KEY='base64:3vRS8+dCkZnpCbBEBGxcce79YyAnwp8OoWe4FKCnaaw='
 # Para rodar no windows 
 def get_powerbi_access_token(username, password, banco_empresa):
     status = 0
-    cmd_debian = 'pwsh'
-    cmd_windows = 'powershell'
+    cmd = "powershell" if platform.system() == "Windows" else "pwsh"
     try:
         print(f"Executando rotina para {banco_empresa} às {datetime.now()}")
         
@@ -34,7 +34,7 @@ def get_powerbi_access_token(username, password, banco_empresa):
         """
         
         # Executa o script PowerShell
-        result = subprocess.run(["powershell", "-Command", powershell_script], capture_output=True, text=True)
+        result = subprocess.run([cmd, "-Command", powershell_script], capture_output=True, text=True)
         
         # Verifica se o comando foi bem-sucedido
         if result.returncode == 0:
@@ -92,7 +92,7 @@ def iniciar_agendador_simplificado():
     df = gera_dados_por_empresa()  
     
     for i in range(5, 23):
-        time_str = f"{i:02d}:00"
+        time_str = f"{i:02d}:18"
         for index, empresa in df.iterrows():
             username = empresa['login']
             senha = empresa['senha']
