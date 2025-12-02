@@ -147,30 +147,34 @@ def gera_dados_por_empresa():
 def iniciar_agendador_simplificado():
     df = gera_dados_por_empresa()  
     
-    for i in range(5, 23):
-        time_str = f"{i:02d}:00"
-        for index, empresa in df.iterrows():
+    # agendar de 05:00 até 22:00
+    for hora in range(5, 23):
+        time_str = f"{hora:02d}:00"
+
+        for _, empresa in df.iterrows():
             username = empresa['login']
             senha = empresa['senha']
             banco_empresa = empresa['empresa']
-            
-            # Criar uma função específica para cada empresa
-            def criar_job(username, senha, banco_empresa):
-                def job():
-                    return get_powerbi_access_token(username, senha, banco_empresa)
-                return job
-            
-            job = criar_job(username, senha, banco_empresa)
+
+            # Criação da função com parâmetros fixados (evita late binding)
+            def job(username=username, senha=senha, banco_empresa=banco_empresa):
+                return get_powerbi_access_token(username, senha, banco_empresa)
+
             schedule.every().day.at(time_str).do(job)
             print(f"Agendado: {banco_empresa} para {time_str}")
-    
+
     print("Agendador simplificado iniciado")
+    
+    # loop principal
     while True:
         schedule.run_pending()
-        threading.Event().wait(60)
+        threading.Event().wait(1)  # checa a cada 1 segundo
 
+
+# iniciar em thread separada
 thread_agendador = threading.Thread(target=iniciar_agendador_simplificado, daemon=False)
 thread_agendador.start()
 thread_agendador.join()
+
 
         
