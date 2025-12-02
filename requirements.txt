@@ -7,4 +7,4 @@ uvicorn
 python-dotenv
 psycopg2
 pandas
-
+msal

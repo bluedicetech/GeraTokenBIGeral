@@ -8,6 +8,7 @@ import schedule
 import threading
 from functools import partial
 import platform
+from msal import PublicClientApplication
 
 load_dotenv()
 
@@ -17,56 +18,110 @@ global status
 APP_KEY='base64:3vRS8+dCkZnpCbBEBGxcce79YyAnwp8OoWe4FKCnaaw='
 
 # Para rodar no windows 
+# def get_powerbi_access_token(username, password, banco_empresa):
+#     status = 0
+#     cmd_debian = 'pwsh'
+#     cmd_windows = 'powershell'
+#     try:
+#         print(f"Executando rotina para {banco_empresa} às {datetime.now()}")
+        
+#         # Cria o script PowerShell que fará login e pegará o token
+#         powershell_script = f"""
+#         $password = ConvertTo-SecureString "{password}" -AsPlainText -Force
+#         $credential = New-Object System.Management.Automation.PSCredential ("{username}", $password)
+#         Login-PowerBI -Credential $credential
+#         $token = Get-PowerBIAccessToken -AsString
+#         $token
+#         """
+        
+#         # Executa o script PowerShell
+#         # print(subprocess.run([cmd_windows, "-Command", powershell_script], capture_output=True, text=True))
+#         result = subprocess.run([cmd_windows, "-Command", powershell_script], capture_output=True, text=True)
+        
+#         # Verifica se o comando foi bem-sucedido
+#         if result.returncode == 0:
+#             token = result.stdout.strip()
+#             print(f"Token bruto recebido: {token}")  # Debug
+            
+#             parts = token.split("Bearer ")
+#             if len(parts) > 1:
+#                 token = parts[1].strip()
+#                 print(f"Token processado: {token}")  # Debug
+                
+#                 try:
+#                     inserir_chave_banco(token, banco_empresa)
+#                     print(f'Empresa: {banco_empresa} - Token gerado e inserido com sucesso!')
+#                 except Exception as e:
+#                     print(f'Erro ao inserir token no banco para {banco_empresa}. Erro: {str(e)}')
+#             else:
+#                 print(f"Formato de token inesperado para {banco_empresa}. Token completo: {token}")
+                
+#         else:
+#             print(f"Erro ao executar o PowerShell script para {banco_empresa}: {result.stderr}")
+        
+#         print(f'Rotina executada para {banco_empresa}')
+        
+#     except Exception as e:
+#         print(f"Erro geral ao executar a rotina para {banco_empresa}: {str(e)}")
+#         import traceback
+#         traceback.print_exc()  # Isso mostrará o stack trace completo
+
+#     return status
+
 def get_powerbi_access_token(username, password, banco_empresa):
     status = 0
-    cmd_debian = 'pwsh'
-    cmd_windows = 'powershell'
+    print(f"Executando rotina para {banco_empresa} às {datetime.now()}")
+
+    # Pegando do .env, igual ao seu padrão
+    tenant_id = "26f6b3c7-7a4d-4af3-a2ba-5b13bfb399c2"
+    client_id = "931ec80c-88b1-454d-bc27-26028102cb87"
+
     try:
-        print(f"Executando rotina para {banco_empresa} às {datetime.now()}")
-        
-        # Cria o script PowerShell que fará login e pegará o token
-        powershell_script = f"""
-        $password = ConvertTo-SecureString "{password}" -AsPlainText -Force
-        $credential = New-Object System.Management.Automation.PSCredential ("{username}", $password)
-        Login-PowerBI -Credential $credential
-        $token = Get-PowerBIAccessToken -AsString
-        $token
-        """
-        
-        # Executa o script PowerShell
-        # print(subprocess.run([cmd_windows, "-Command", powershell_script], capture_output=True, text=True))
-        result = subprocess.run([cmd_debian, "-Command", powershell_script], capture_output=True, text=True)
-        
-        # Verifica se o comando foi bem-sucedido
-        if result.returncode == 0:
-            token = result.stdout.strip()
-            print(f"Token bruto recebido: {token}")  # Debug
-            
-            parts = token.split("Bearer ")
-            if len(parts) > 1:
-                token = parts[1].strip()
-                print(f"Token processado: {token}")  # Debug
-                
-                try:
-                    inserir_chave_banco(token, banco_empresa)
-                    print(f'Empresa: {banco_empresa} - Token gerado e inserido com sucesso!')
-                except Exception as e:
-                    print(f'Erro ao inserir token no banco para {banco_empresa}. Erro: {str(e)}')
-            else:
-                print(f"Formato de token inesperado para {banco_empresa}. Token completo: {token}")
-                
-        else:
-            print(f"Erro ao executar o PowerShell script para {banco_empresa}: {result.stderr}")
-        
-        print(f'Rotina executada para {banco_empresa}')
-        
+        authority = f"https://login.microsoftonline.com/{tenant_id}"
+
+        # App MSAL para login com username/password
+        app = PublicClientApplication(
+            client_id=client_id,
+            authority=authority
+        )
+
+        # Mesmo escopo usado pelo PowerShell para token do Power BI
+        scopes = ["https://analysis.windows.net/powerbi/api/.default"]
+
+        # Login por usuário e senha
+        result = app.acquire_token_by_username_password(
+            username=username,
+            password=password,
+            scopes=scopes
+        )
+
+        # Se deu erro
+        if "access_token" not in result:
+            print(f"Erro ao adquirir token MSAL para {banco_empresa}: {result}")
+            return status
+
+        # Token retornado pelo MSAL
+        token = result["access_token"]
+        print(f"Token processado (MSAL ROPC): {token[:50]}...")  # debug seguro
+
+        # Mantém o mesmo padrão do seu código antigo
+        token_completo = f"Bearer {token}"
+
+        # Insere no banco (mantido do seu código atual)
+        try:
+            inserir_chave_banco(token_completo, banco_empresa)
+            print(f'Empresa: {banco_empresa} - Token gerado e inserido com sucesso!')
+        except Exception as e:
+            print(f'Erro ao inserir token no banco para {banco_empresa}. Erro: {str(e)}')
+
+        print(f"Rotina executada para {banco_empresa}")
+
     except Exception as e:
         print(f"Erro geral ao executar a rotina para {banco_empresa}: {str(e)}")
         import traceback
-        traceback.print_exc()  # Isso mostrará o stack trace completo
+        traceback.print_exc()
 
     return status
-
 
 def gera_dados_por_empresa():
     lista_banco_de_dados = []
@@ -93,7 +148,7 @@ def iniciar_agendador_simplificado():
     df = gera_dados_por_empresa()  
     
     for i in range(5, 23):
-        time_str = f"{i:02d}:00"
+        time_str = f"{i:02d}:06"
         for index, empresa in df.iterrows():
             username = empresa['login']
             senha = empresa['senha']
