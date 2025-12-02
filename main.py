@@ -148,7 +148,7 @@ def iniciar_agendador_simplificado():
     df = gera_dados_por_empresa()  
     
     for i in range(5, 23):
-        time_str = f"{i:02d}:06"
+        time_str = f"{i:02d}:00"
         for index, empresa in df.iterrows():
             username = empresa['login']
             senha = empresa['senha']
