@@ -1,4 +1,3 @@
-from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
 from query import *
@@ -14,7 +13,7 @@ load_dotenv()
 
 global status
 
-app = FastAPI()
+
 APP_KEY='base64:3vRS8+dCkZnpCbBEBGxcce79YyAnwp8OoWe4FKCnaaw='
 
 # Para rodar no windows 
@@ -35,7 +34,7 @@ def get_powerbi_access_token(username, password, banco_empresa):
         """
         
         # Executa o script PowerShell
-        print(subprocess.run([cmd_debian, "-Command", powershell_script], capture_output=True, text=True))
+        # print(subprocess.run([cmd_windows, "-Command", powershell_script], capture_output=True, text=True))
         result = subprocess.run([cmd_debian, "-Command", powershell_script], capture_output=True, text=True)
         
         # Verifica se o comando foi bem-sucedido
@@ -94,7 +93,7 @@ def iniciar_agendador_simplificado():
     df = gera_dados_por_empresa()  
     
     for i in range(5, 23):
-        time_str = f"{i:02d}:23"
+        time_str = f"{i:02d}:00"
         for index, empresa in df.iterrows():
             username = empresa['login']
             senha = empresa['senha']
