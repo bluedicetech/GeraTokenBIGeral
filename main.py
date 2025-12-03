@@ -149,7 +149,7 @@ def iniciar_agendador_simplificado():
     
     # agendar de 05:00 até 22:00
     for hora in range(5, 23):
-        time_str = f"{hora:02d}:00"
+        time_str = f"{hora:02d}:15"
 
         for _, empresa in df.iterrows():
             username = empresa['login']
