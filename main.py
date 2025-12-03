@@ -105,11 +105,11 @@ def get_powerbi_access_token(username, password, banco_empresa):
         print(f"Token processado (MSAL ROPC): {token[:50]}...")  # debug seguro
 
         # Mantém o mesmo padrão do seu código antigo
-        token_completo = f"Bearer {token}"
+        # token_completo = f"Bearer {token}"
 
         # Insere no banco (mantido do seu código atual)
         try:
-            inserir_chave_banco(token_completo, banco_empresa)
+            inserir_chave_banco(token, banco_empresa)
             print(f'Empresa: {banco_empresa} - Token gerado e inserido com sucesso!')
         except Exception as e:
             print(f'Erro ao inserir token no banco para {banco_empresa}. Erro: {str(e)}')
@@ -149,7 +149,7 @@ def iniciar_agendador_simplificado():
     
     # agendar de 05:00 até 22:00
     for hora in range(5, 23):
-        time_str = f"{hora:02d}:15"
+        time_str = f"{hora:02d}:00"
 
         for _, empresa in df.iterrows():
             username = empresa['login']
