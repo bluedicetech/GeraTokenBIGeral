@@ -2,20 +2,17 @@ from dotenv import load_dotenv
 import os
 from query import *
 import pandas as pd
-import subprocess
 from apscheduler.schedulers.background import BackgroundScheduler
 import schedule
 import threading
-from functools import partial
-import platform
+from desencriptar import decrypt_laravel
 from msal import PublicClientApplication
-
 load_dotenv()
 
 global status
 
 
-APP_KEY='base64:3vRS8+dCkZnpCbBEBGxcce79YyAnwp8OoWe4FKCnaaw='
+
 
 # Para rodar no windows 
 # def get_powerbi_access_token(username, password, banco_empresa):
@@ -68,13 +65,13 @@ APP_KEY='base64:3vRS8+dCkZnpCbBEBGxcce79YyAnwp8OoWe4FKCnaaw='
 
 #     return status
 
-def get_powerbi_access_token(username, password, banco_empresa):
+def get_powerbi_access_token(username, password, banco_empresa, tenant_id, client_id):
     status = 0
     print(f"Executando rotina para {banco_empresa} às {datetime.now()}")
 
-    # Pegando do .env, igual ao seu padrão
-    tenant_id = "26f6b3c7-7a4d-4af3-a2ba-5b13bfb399c2"
-    client_id = "931ec80c-88b1-454d-bc27-26028102cb87"
+    # # Pegando do .env, igual ao seu padrão
+    # tenant_id = "26f6b3c7-7a4d-4af3-a2ba-5b13bfb399c2"
+    # client_id = "931ec80c-88b1-454d-bc27-26028102cb87"
 
     try:
         authority = f"https://login.microsoftonline.com/{tenant_id}"
@@ -128,16 +125,31 @@ def gera_dados_por_empresa():
     lista_empresas = []
     lista_banco_de_dados = consultar_banco_dados("bluedice")
     df_lista_banco_de_dados = pd.DataFrame(lista_banco_de_dados)
+    # Pegando do .env, igual ao seu padrão
+    tenant_id_bd = "26f6b3c7-7a4d-4af3-a2ba-5b13bfb399c2"
+    client_id_bd = "931ec80c-88b1-454d-bc27-26028102cb87"
+    tenant_id_ibl = "3ebc9587-546f-4a1e-934a-a925797d8d6e"
+    client_id_ibl = "f255fada-f49f-4e5b-9ab9-e18b97ac6453"
     print(df_lista_banco_de_dados)
     for index, row in df_lista_banco_de_dados.iterrows():
         nome_empresa = 'emp_' + str(row['cnpj']).replace('/','').replace('.','').replace('-','')
         login = row['email_publicacao']
         senha = row['password_publicacao']
+        # app_key_base64 = os.getenv('APP_KEY')
+        # decrypt_laravel(senha, app_key_base64)
         # senha = laravel_decrypt(senha,APP_KEY)
+        if nome_empresa == 'emp_00105678000160':
+            tenant_id = tenant_id_ibl
+            client_id = client_id_ibl
+        else:
+            tenant_id = tenant_id_bd
+            client_id = client_id_bd
         lista_empresas.append({
         "empresa": nome_empresa,
         "login": login,
-        "senha": senha
+        "senha": senha,
+        'tenant_id': tenant_id,
+        'client_id': client_id
     })
 
     df_informacoes_login = pd.DataFrame(lista_empresas)
@@ -155,10 +167,12 @@ def iniciar_agendador_simplificado():
             username = empresa['login']
             senha = empresa['senha']
             banco_empresa = empresa['empresa']
+            tenant_id = empresa['tenant_id']
+            client_id = empresa['client_id']
 
             # Criação da função com parâmetros fixados (evita late binding)
-            def job(username=username, senha=senha, banco_empresa=banco_empresa):
-                return get_powerbi_access_token(username, senha, banco_empresa)
+            def job(username=username, senha=senha, banco_empresa=banco_empresa, tenant_id=tenant_id, client_id=client_id):
+                return get_powerbi_access_token(username, senha, banco_empresa, tenant_id, client_id)
 
             schedule.every().day.at(time_str).do(job)
             print(f"Agendado: {banco_empresa} para {time_str}")
